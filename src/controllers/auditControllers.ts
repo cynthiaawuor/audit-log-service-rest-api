@@ -18,6 +18,8 @@ export const createEventsController = async (req: Request, res: Response) => {
 };
 
 export const getEventsController = async (req: Request, res: Response) => {
-  const events = await auditEventService.getAuditEvents();
+  const events = await auditEventService.getAuditEvents(
+    req.query as Record<string, string>,
+  );
   return res.status(201).json(events);
 };
