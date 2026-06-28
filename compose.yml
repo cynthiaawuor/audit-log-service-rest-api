@@ -1,0 +1,24 @@
+services:
+  postgres_db:
+    build:
+      context: ./postgres
+      dockerfile: Dockerfile
+    
+    container_name: my-postgres-container
+    
+    # Map the host port to the container port
+    ports:
+      - "5434:5432"
+      
+    # Environment variables set here will override the ENV directives in your Dockerfile
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: my_db
+      
+    # volumes:
+    #   - postgres_data:/var/lib/postgresql/data
+
+# # Declare the named volume referenced above
+# volumes:
+#   postgres_data:

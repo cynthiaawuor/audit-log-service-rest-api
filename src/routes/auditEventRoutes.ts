@@ -1,5 +1,8 @@
 import { Router } from "express";
-import { createEventsController } from "../controllers/auditControllers.js";
+import {
+  createEventsController,
+  getEventsController,
+} from "../controllers/auditControllers.js";
 import { validateAuditEvent } from "../middlewares/validateAuditEvent.js";
 import { insertAuditSchema } from "../db/zodSchema.js";
 
@@ -9,5 +12,7 @@ router.post(
   validateAuditEvent(insertAuditSchema),
   createEventsController,
 );
+
+router.get("/events", getEventsController);
 
 export default router;
