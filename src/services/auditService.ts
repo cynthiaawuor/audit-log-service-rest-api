@@ -124,3 +124,14 @@ export const getAuditEvents = async (queryParams: Record<string, string>) => {
     throw e;
   }
 };
+
+export const getEventById = async (id: string) => {
+  try {
+    const event = await db.query.audits.findFirst({
+      where: eq(audits.id, parseInt(id)),
+    });
+    return event;
+  } catch (e) {
+    throw e;
+  }
+};

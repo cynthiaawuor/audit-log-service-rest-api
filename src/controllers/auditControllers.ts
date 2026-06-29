@@ -23,3 +23,16 @@ export const getEventsController = async (req: Request, res: Response) => {
   );
   return res.status(201).json(events);
 };
+
+export const getEventByIdController = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const event = await auditEventService.getEventById(id as string);
+  if (!event) {
+    return res.status(404).json({
+      ok: false,
+      event: null,
+      message: "Event not found",
+    });
+  }
+  return res.status(200).json(event);
+};
