@@ -4,6 +4,10 @@ An Express + TypeScript service for recording and reading audit events.
 
 The service stores append-only audit records in PostgreSQL through Drizzle ORM. It is intended for product or platform services that need to answer questions like "who changed this resource?", "what actions did this actor take?", and "what happened during this time window?" without allowing existing audit records to be edited or deleted through the API.
 
+## API Reference
+
+The OpenAPI document is available at [openapi.json](/home/kali/reduzer/sprint/audit-log-service-rest-api/openapi.json:1). Load it in Swagger UI, Redoc, Stoplight, or another OpenAPI viewer to inspect every path, request body, query parameter, response, and status code.
+
 ## Tech Stack
 
 - Node.js, TypeScript, Express 5

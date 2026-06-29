@@ -1,0 +1,677 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Audit Log Service REST API",
+    "version": "1.0.0",
+    "description": "REST API for recording append-only audit events and querying stored audit history."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Local development server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Events",
+      "description": "Audit event write and read operations"
+    }
+  ],
+  "paths": {
+    "/events": {
+      "post": {
+        "tags": ["Events"],
+        "summary": "Record one audit event",
+        "description": "Creates one audit event. The current service implementation persists the core audit fields for this endpoint: actor_id, action, resource_type, and resource_id.",
+        "operationId": "createEvent",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAuditEventRequest"
+              },
+              "examples": {
+                "createEvent": {
+                  "summary": "Create an invoice event",
+                  "value": {
+                    "actor_id": "user_123",
+                    "action": "invoice.created",
+                    "resource_type": "invoice",
+                    "resource_id": "inv_001"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Audit event created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateAuditEventResponse"
+                },
+                "examples": {
+                  "created": {
+                    "value": {
+                      "ok": true,
+                      "payload": [
+                        {
+                          "id": 1,
+                          "actor_id": "user_123",
+                          "action": "invoice.created",
+                          "resource_type": "invoice",
+                          "resource_id": "inv_001",
+                          "before_state": null,
+                          "after_state": null,
+                          "ip_address": null,
+                          "user_agent": null,
+                          "timestamp": "2026-06-29T10:30:00.000Z"
+                        }
+                      ],
+                      "errors": []
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request body failed validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                },
+                "examples": {
+                  "missingActor": {
+                    "value": {
+                      "errors": [
+                        {
+                          "field": "actor_id",
+                          "message": "actor_id is required"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "get": {
+        "tags": ["Events"],
+        "summary": "Query audit events",
+        "description": "Returns paginated audit events filtered by actor, action, resource, and timestamp query parameters. The current controller returns this successful response with HTTP 201.",
+        "operationId": "listEvents",
+        "parameters": [
+          {
+            "name": "actor_id",
+            "in": "query",
+            "description": "Comma-separated actor IDs.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "user_123,user_456"
+            }
+          },
+          {
+            "name": "actions",
+            "in": "query",
+            "description": "Comma-separated audit action names.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "invoice.created,invoice.updated"
+            }
+          },
+          {
+            "name": "resource_type",
+            "in": "query",
+            "description": "Comma-separated resource types.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "invoice,customer"
+            }
+          },
+          {
+            "name": "resource_id",
+            "in": "query",
+            "description": "Comma-separated resource IDs.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "inv_001,inv_002"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "Start timestamp filter. Parsed by JavaScript Date.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "example": "2026-06-29T00:00:00.000Z"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "End timestamp filter. Parsed by JavaScript Date.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "example": "2026-06-30T00:00:00.000Z"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of events to return. Defaults to 10.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 10,
+              "example": 5
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "One-based page number. Defaults to 1.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "example": 1
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Paginated audit events returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListAuditEventsResponse"
+                },
+                "examples": {
+                  "actorEvents": {
+                    "value": {
+                      "data": [
+                        {
+                          "id": 1,
+                          "actor_id": "user_123",
+                          "action": "invoice.created",
+                          "resource_type": "invoice",
+                          "resource_id": "inv_001",
+                          "before_state": null,
+                          "after_state": null,
+                          "ip_address": null,
+                          "user_agent": null,
+                          "timestamp": "2026-06-29T10:30:00.000Z"
+                        }
+                      ],
+                      "meta": {
+                        "limit": 10,
+                        "page": 1,
+                        "total": 1,
+                        "totalPages": 1
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/events/bulk": {
+      "post": {
+        "tags": ["Events"],
+        "summary": "Record audit events in bulk",
+        "description": "Creates multiple audit events. The request body must contain between 1 and 100 events.",
+        "operationId": "createBulkEvents",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBulkAuditEventsRequest"
+              },
+              "examples": {
+                "bulkCreate": {
+                  "summary": "Create two invoice events",
+                  "value": [
+                    {
+                      "actor_id": "user_123",
+                      "action": "invoice.updated",
+                      "resource_type": "invoice",
+                      "resource_id": "inv_001",
+                      "before_state": "{\"status\":\"draft\"}",
+                      "after_state": "{\"status\":\"sent\"}",
+                      "ip_address": "127.0.0.1",
+                      "user_agent": "curl/8.0"
+                    },
+                    {
+                      "actor_id": "user_456",
+                      "action": "invoice.viewed",
+                      "resource_type": "invoice",
+                      "resource_id": "inv_001"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Audit events created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateBulkAuditEventsResponse"
+                },
+                "examples": {
+                  "created": {
+                    "value": {
+                      "message": "event(s) created successfully",
+                      "Total": 2
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request body failed validation, was empty, or contained more than 100 events",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ValidationErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/BadRequestErrorResponse"
+                    }
+                  ]
+                },
+                "examples": {
+                  "emptyBody": {
+                    "value": {
+                      "error": "Bad Request",
+                      "message": "The bulk request body cannot be empty. Please provide an array of events to insert."
+                    }
+                  },
+                  "tooManyEvents": {
+                    "value": {
+                      "error": "Bad Request",
+                      "message": "Payload too large. Maximum of 100 events allowed per bulk request."
+                    }
+                  },
+                  "validationError": {
+                    "value": {
+                      "errors": [
+                        {
+                          "field": "0.resource_id",
+                          "message": "resource_id is required."
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/events/{id}": {
+      "get": {
+        "tags": ["Events"],
+        "summary": "Get one audit event by ID",
+        "description": "Returns one stored audit event by its integer ID.",
+        "operationId": "getEventById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Generated audit event ID.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "example": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Audit event found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditEvent"
+                },
+                "examples": {
+                  "found": {
+                    "value": {
+                      "id": 1,
+                      "actor_id": "user_123",
+                      "action": "invoice.created",
+                      "resource_type": "invoice",
+                      "resource_id": "inv_001",
+                      "before_state": null,
+                      "after_state": null,
+                      "ip_address": null,
+                      "user_agent": null,
+                      "timestamp": "2026-06-29T10:30:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Audit event not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundResponse"
+                },
+                "examples": {
+                  "notFound": {
+                    "value": {
+                      "ok": false,
+                      "event": null,
+                      "message": "Event not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "responses": {
+      "InternalServerError": {
+        "description": "Unexpected server error. The service does not currently define a custom error response body for unhandled errors."
+      }
+    },
+    "schemas": {
+      "AuditEvent": {
+        "type": "object",
+        "required": [
+          "id",
+          "actor_id",
+          "action",
+          "resource_type",
+          "resource_id",
+          "timestamp"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "actor_id": {
+            "type": "string",
+            "example": "user_123"
+          },
+          "action": {
+            "type": "string",
+            "example": "invoice.created"
+          },
+          "resource_type": {
+            "type": "string",
+            "example": "invoice"
+          },
+          "resource_id": {
+            "type": "string",
+            "example": "inv_001"
+          },
+          "before_state": {
+            "type": "string",
+            "nullable": true,
+            "example": "{\"status\":\"draft\"}"
+          },
+          "after_state": {
+            "type": "string",
+            "nullable": true,
+            "example": "{\"status\":\"sent\"}"
+          },
+          "ip_address": {
+            "type": "string",
+            "format": "ipv4",
+            "nullable": true,
+            "example": "127.0.0.1"
+          },
+          "user_agent": {
+            "type": "string",
+            "nullable": true,
+            "example": "curl/8.0"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-06-29T10:30:00.000Z"
+          }
+        }
+      },
+      "CreateAuditEventRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "actor_id",
+          "action",
+          "resource_type",
+          "resource_id"
+        ],
+        "properties": {
+          "actor_id": {
+            "type": "string",
+            "minLength": 1,
+            "example": "user_123"
+          },
+          "action": {
+            "type": "string",
+            "example": "invoice.created"
+          },
+          "resource_type": {
+            "type": "string",
+            "example": "invoice"
+          },
+          "resource_id": {
+            "type": "string",
+            "minLength": 1,
+            "example": "inv_001"
+          },
+          "before_state": {
+            "type": "string",
+            "example": "{\"status\":\"draft\"}"
+          },
+          "after_state": {
+            "type": "string",
+            "example": "{\"status\":\"sent\"}"
+          },
+          "ip_address": {
+            "type": "string",
+            "format": "ipv4",
+            "example": "127.0.0.1"
+          },
+          "user_agent": {
+            "type": "string",
+            "example": "curl/8.0"
+          }
+        }
+      },
+      "CreateAuditEventResponse": {
+        "type": "object",
+        "required": ["ok", "payload", "errors"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "example": true
+          },
+          "payload": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditEvent"
+            }
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "example": []
+          }
+        }
+      },
+      "CreateBulkAuditEventsRequest": {
+        "type": "array",
+        "minItems": 1,
+        "maxItems": 100,
+        "items": {
+          "$ref": "#/components/schemas/CreateAuditEventRequest"
+        }
+      },
+      "CreateBulkAuditEventsResponse": {
+        "type": "object",
+        "required": ["message", "Total"],
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "event(s) created successfully"
+          },
+          "Total": {
+            "type": "integer",
+            "example": 2
+          }
+        }
+      },
+      "ListAuditEventsResponse": {
+        "type": "object",
+        "required": ["data", "meta"],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditEvent"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PaginationMeta"
+          }
+        }
+      },
+      "PaginationMeta": {
+        "type": "object",
+        "required": ["limit", "page", "total", "totalPages"],
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "example": 10
+          },
+          "page": {
+            "type": "integer",
+            "example": 1
+          },
+          "total": {
+            "type": "integer",
+            "example": 1
+          },
+          "totalPages": {
+            "type": "integer",
+            "example": 1
+          }
+        }
+      },
+      "ValidationErrorResponse": {
+        "type": "object",
+        "required": ["errors"],
+        "properties": {
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValidationIssue"
+            }
+          }
+        }
+      },
+      "ValidationIssue": {
+        "type": "object",
+        "required": ["field", "message"],
+        "properties": {
+          "field": {
+            "type": "string",
+            "example": "actor_id"
+          },
+          "message": {
+            "type": "string",
+            "example": "actor_id is required"
+          }
+        }
+      },
+      "BadRequestErrorResponse": {
+        "type": "object",
+        "required": ["error", "message"],
+        "properties": {
+          "error": {
+            "type": "string",
+            "example": "Bad Request"
+          },
+          "message": {
+            "type": "string",
+            "example": "Payload too large. Maximum of 100 events allowed per bulk request."
+          }
+        }
+      },
+      "NotFoundResponse": {
+        "type": "object",
+        "required": ["ok", "event", "message"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "example": false
+          },
+          "event": {
+            "type": "object",
+            "nullable": true,
+            "example": null
+          },
+          "message": {
+            "type": "string",
+            "example": "Event not found"
+          }
+        }
+      }
+    }
+  }
+}
