@@ -29,19 +29,6 @@ export const getAuditEvents = async (queryParams: Record<string, string>) => {
       page,
     } = queryParams;
     const dateRanges = [];
-    // let fromDate: Date | null;
-    // try {
-    //   fromDate = new Date(from ?? "");
-    // } catch (e) {
-    //   fromDate = null;
-    // }
-
-    // let toDate: Date | null;
-    // try {
-    //   toDate = new Date(to ?? "");
-    // } catch (e) {
-    //   toDate = null;
-    // }
     const _limit = Number(limit) || 10;
     const _page = (Number(page) || 1) - 1;
 
@@ -134,4 +121,8 @@ export const getEventById = async (id: string) => {
   } catch (e) {
     throw e;
   }
+};
+
+export const createBulkEvents = async (data: InsertAuditEvent[]) => {
+  return await db.insert(audits).values(data).onConflictDoNothing().returning();
 };

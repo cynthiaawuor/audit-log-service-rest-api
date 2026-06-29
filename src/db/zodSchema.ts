@@ -20,3 +20,4 @@ export const insertAuditSchema = createInsertSchema(audits, {
 }).omit({ timestamp: true, id: true });
 
 export type InsertAuditEvent = z.infer<typeof insertAuditSchema>;
+export const bulkInsertSchema = z.array(insertAuditSchema);
